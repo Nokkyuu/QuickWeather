@@ -5,6 +5,7 @@ from modules import DataBaseHandler, DataCollector
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import logging #TODO: add logging
 
 
 os.chdir(Path(__file__).parent)
@@ -78,7 +79,7 @@ def main():
             | Lat/Lon             | {lat}, {lon}.         |
             | Temperature (°C)     | {temp}               |
             | Feels Like (°C)      | {feels_like}         |
-            | Min/Max Temperature (°C) | {min_temp}, {max_temp}|
+            | Min/Max temp (°C) | {min_temp}, {max_temp}|
             | Wind Speed (m/s)     | {wind_speed}         |
             | Local Time           | {local_time}         |
             | Sunrise              | {sunrise}            |
