@@ -9,7 +9,7 @@ class DataCollector:
         self.api_key = api_key
         self.lang = lang
 
-    def get_weather_information(self, searchtype:str, **kwargs):
+    def get_weather_information(self, searchtype:str, **kwargs) -> dict: #type: ignore
         """main function to get weather information from OpenWeatherMap API
 
         Args:
@@ -21,7 +21,7 @@ class DataCollector:
                 lon (float): longitude for geo search
                 
         Returns:
-            _type_: API resonse data in JSON format
+            dict : API resonse data in JSON format
         """
         country = kwargs.get("country", "de")
         lat = kwargs.get("lat", None)
@@ -128,7 +128,7 @@ class DataCollector:
         except KeyError:
             return {"city_name": "Unknown", "country_short": "Unknown"}
 
-    def get_search_entry(self, data):
+    def get_search_entry(self, data) -> dict:
         """function to get all relevant information from API response
 
         Args:
@@ -143,7 +143,7 @@ class DataCollector:
             time: current time, sunrise and sunset times in the local time
             city_information: city name and country code
         """
-        return {
+        search_entry = {
             "description": self.get_description(data),
             "temperature": self.get_temperature(data),
             "coordinates": self.get_coordinates(data),
@@ -151,6 +151,8 @@ class DataCollector:
             "time": self.get_time(data),
             "city_information": self.get_city_information(data)
         }
+
+        return search_entry
   
 
 if __name__ == "__main__":

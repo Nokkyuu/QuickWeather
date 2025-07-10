@@ -9,16 +9,17 @@ import logging #TODO: add logging
 
 
 os.chdir(Path(__file__).parent)
-load_dotenv(override=False)
+load_dotenv(override=True)
 
 
 API_KEY = os.getenv('WEATHER_APIKEY')
-DB_PATH= "db/search_results.db"
+DB_PATH = "db/search_results.db"
 
 
 
 def main():
-    db_handler = DataBaseHandler(db_path=DB_PATH)     
+    db_handler = DataBaseHandler(db_path=DB_PATH)
+    db_handler.load_search_history()    
     collector = DataCollector(api_key=API_KEY, lang="en")
     search_entry = None
 
@@ -33,13 +34,13 @@ def main():
             country = st.text_input("country code", "de")
             if st.button("Quick Info"):
                 search_entry = collector.get_search_entry(collector.get_weather_information(searchtype="name", name=city, country=country))
-                db_handler.add_entry(search_entry=search_entry)
+                db_handler.add_search_entry(search_entry=search_entry)
         elif search_mode == "geolocation":
             lat = st.number_input("Latitude", format="%.4f")
             lon = st.number_input("Longitude", format="%.4f")
             if st.button("Quick Info"):
                 search_entry = collector.get_search_entry(collector.get_weather_information(searchtype="geo", lat=lat, lon=lon))
-                db_handler.add_entry(search_entry=search_entry)
+                db_handler.add_search_entry(search_entry=search_entry)
 
     # Showresults
     if search_entry:
@@ -63,7 +64,7 @@ def main():
 
         with col1:
             fig = px.scatter_mapbox(
-                db_handler.get_entry(),
+                db_handler.get_last_search_entry(),
                 lat="lat", lon="lon", hover_name="cityname", hover_data=["temperature"],
                 zoom=10, height=300
             )
@@ -91,7 +92,7 @@ def main():
         st.info("Please enter a city name and country code or geolocation to get local information.")
     
     st.subheader("Search History")
-    st.dataframe(db_handler.get_entries().iloc[::-1], use_container_width=True)
+    st.dataframe(db_handler.df.iloc[::-1], use_container_width=True)
     
 
 
