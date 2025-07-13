@@ -1,13 +1,15 @@
 import requests
-import logging #TODO: add logging
+import logging 
 import datetime
 
+logger = logging.getLogger()
 class DataCollector:
     """Class to collect weather data from OpenWeatherMap API."""
 
     def __init__(self, api_key: str | None, lang: str = "de"):
         self.api_key = api_key
         self.lang = lang
+        logger.debug(f"DataCollector initialized with API key: {self.api_key} and language: {self.lang}")
 
     def get_weather_information(self, searchtype:str, **kwargs) -> dict: #type: ignore
         """main function to get weather information from OpenWeatherMap API
@@ -29,15 +31,24 @@ class DataCollector:
         name = kwargs.get("name", None)
 
         if searchtype not in ["name", "geo"]:
+            logger.error("Invalid searchtype provided. Must be 'name' or 'geo'.")
             raise ValueError("searchtype must be 'name' or 'geo'")
         else:
             if searchtype == "name":
-                url = f"https://api.openweathermap.org/data/2.5/weather?q={name},{country}&appid={self.api_key}&units=metric&lang={self.lang}"  
+                url = f"https://api.openweathermap.org/data/2.5/weather?q={name},{country}&appid={self.api_key}&units=metric&lang={self.lang}"
                 data = requests.get(url).json()
+                if data.get("cod") != 200:
+                    logger.error(f"Error fetching data for {name}, {country}: {data.get('message', 'Unknown error')}")
+                    return {}
+                logger.debug(f"Weather data retrieved for {name}, {country}.")
                 return data
             elif searchtype == "geo":
                 url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={self.api_key}&units=metric&lang={self.lang}"
                 data = requests.get(url).json()
+                if data.get("cod") != 200:
+                    logger.error(f"Error fetching data for coordinates {lat}, {lon}: {data.get('message', 'Unknown error')}")
+                    return {}
+                logger.debug(f"Weather data retrieved for coordinates {lat}, {lon}.")
                 return data
     
     def get_description(self, data) -> str:
@@ -52,6 +63,7 @@ class DataCollector:
         try:
             return data['weather'][0]['description']
         except KeyError:
+            logger.warning("No weather description found in the API response.")
             return "No description available"
         
     def get_temperature(self, data) -> dict:
@@ -67,6 +79,7 @@ class DataCollector:
         try:
             return {"current" : data['main']['temp'], "feels_like" : data['main']['feels_like'], "min" : data['main']['temp_min'], "max" : data['main']['temp_max']}
         except KeyError:
+            logger.warning("No temperature data found in the API response.")
             return {"current" : 0, "feels_like" : 0, "min" : 0, "max" : 0}
 
     def get_coordinates(self, data) -> dict:
@@ -81,6 +94,7 @@ class DataCollector:
         try:
             return data['coord']
         except KeyError:
+            logger.warning("No coordinates found in the API response.")
             return {"lat": 0, "lon": 0}
         
     def get_windspeed(self, data) -> float:
@@ -95,6 +109,7 @@ class DataCollector:
         try:
             return data['wind']['speed']
         except KeyError:
+            logger.warning("No wind speed found in the API response.")
             return 0.0
 
     def get_time(self, data) -> dict:
@@ -114,6 +129,7 @@ class DataCollector:
                 "sunset": (datetime.datetime.fromtimestamp(data['sys']['sunset'], datetime.timezone.utc)+ datetime.timedelta(seconds=tz)).strftime("%H:%M")
             }
         except KeyError:
+            logger.warning("No time information found in the API response.")
             return {"current": "00:00", "sunrise": "00:00", "sunset": "00:00"}
   
     def get_city_information(self, data) -> dict:
@@ -126,6 +142,7 @@ class DataCollector:
         try:
             return {"city_name" : data["name"], "country_short" : data["sys"]["country"]}
         except KeyError:
+            logger.warning("No city information found in the API response.")
             return {"city_name": "Unknown", "country_short": "Unknown"}
 
     def get_search_entry(self, data) -> dict:
@@ -151,6 +168,7 @@ class DataCollector:
             "time": self.get_time(data),
             "city_information": self.get_city_information(data)
         }
+        logger.debug(f"Search entry created: {search_entry}")
 
         return search_entry
   

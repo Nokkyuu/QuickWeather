@@ -5,12 +5,16 @@ from modules import DataBaseHandler, DataCollector
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import logging #TODO: add logging
+import logging 
+from logging.config import fileConfig 
 
 
 os.chdir(Path(__file__).parent)
 load_dotenv(override=True)
 
+fileConfig("./logging.ini")
+
+logger = logging.getLogger()
 
 API_KEY = os.getenv('WEATHER_APIKEY')
 DB_PATH = "db/search_results.db"
@@ -77,10 +81,10 @@ def main():
             | City                 | {city_name}, {country_code}|
             |----------------------|----------------------|
             | Description          | {desc}               |
-            | Lat/Lon             | {lat}, {lon}.         |
+            | Lat/Lon              | {lat}, {lon}.        |
             | Temperature (°C)     | {temp}               |
             | Feels Like (°C)      | {feels_like}         |
-            | Min/Max temp (°C) | {min_temp}, {max_temp}|
+            | Min/Max temp (°C)    | {min_temp}, {max_temp}|
             | Wind Speed (m/s)     | {wind_speed}         |
             | Local Time           | {local_time}         |
             | Sunrise              | {sunrise}            |

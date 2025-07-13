@@ -1,6 +1,6 @@
 import os
 import sqlite3
-import logging #TODO: add logging
+
 
 
 
@@ -10,6 +10,7 @@ def connect_db(db_path: str):
     """
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
+    
     return cursor, conn
 
 def initiate_database(cursor, conn, db_path, override: bool = False):

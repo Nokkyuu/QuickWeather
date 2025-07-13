@@ -1,9 +1,9 @@
 import sqlite3
-
-import logging #TODO: add logging
+import logging #
 import pandas as pd
 from datetime import datetime
 
+logger = logging.getLogger()
 class DataBaseHandler:
     """Class for handling SQLite database operations for weather data.
     This class provides methods to add cities, retrieve city IDs,
@@ -13,10 +13,12 @@ class DataBaseHandler:
     
     def __init__(self, db_path: str):
         self.db_path = db_path
+        logger.debug(f"Initializing DataBaseHandler with db_path: {self.db_path}")
         
     def get_search_entries(self):
         """Retrieves all entries from the search_result table and returns a dataframe."""
         df = pd.read_sql("SELECT * FROM search_result", self.conn, index_col='ID')
+        logger.debug("Retrieved search entries from the database.")
         return df 
     
     def load_search_history(self):
@@ -26,18 +28,20 @@ class DataBaseHandler:
             sql = "SELECT * FROM search_result"
             self.conn = sqlite3.connect(self.db_path)
             self.cursor = self.conn.cursor()
-            self.df = self.get_search_entries()
+            self.df = self.get_search_entries() #in memory data handling with pandas DataFrame to avoid rendundant sql queries.
+            logger.info("Search history loaded successfully.")
         except sqlite3.OperationalError as e:
-            logging.error(f"Database error: {e}")
+            logger.error(f"Database error: {e}")
         
         except Exception as e:
-            logging.error(f"Error connecting to the database: {e}")
+            logger.error(f"Error connecting to the database: {e}")
 
 
     def close_connection(self):
         """Closes the database connection."""
         if self.conn:
             self.conn.close()
+            logger.debug("Database connection closed.")
             
     def add_search_entry(self, search_entry: dict):
         """add a new entry to the search_result table in the database.
@@ -60,8 +64,9 @@ class DataBaseHandler:
             local_time = search_entry["time"]["current"]
             sunrise = search_entry["time"]["sunrise"]
             sunset = search_entry["time"]["sunset"]
+            logger.debug(f"Adding search entry for {city_name}, {country_code} at {timestamp}.")
         except KeyError as e:
-            logging.error(f"Missing key in search entry: {e}")     
+            logger.error(f"Missing key in search entry: {e}")     
         else:
             sql = """INSERT INTO search_result 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
@@ -69,6 +74,7 @@ class DataBaseHandler:
             data = (None, timestamp ,city_name, country_code, lat, lon, description, temperature, feels_like, min_temp, max_temp, wind_speed, local_time, sunrise, sunset)
             self.cursor.execute(sql, data)
             self.conn.commit()
+            logger.info(f"Search entry for {city_name}, {country_code} added successfully.")
 
             new_row = {
                 "timestamp": timestamp,
@@ -86,11 +92,14 @@ class DataBaseHandler:
                 "sunrise": sunrise,
                 "sunset": sunset
             }
-            self.df = pd.concat([self.df, pd.DataFrame([new_row])], ignore_index=True)  
+            #to keep in memory data (self.df) synchronized with database during runtime
+            self.df = pd.concat([self.df, pd.DataFrame([new_row])], ignore_index=True)
+            logger.debug("New search entry added to the in-memory DataFrame.") 
     
     def get_last_search_entry(self):
         """Retrieves the last entry from the search_result table as a dataframe."""
         df = pd.read_sql("SELECT * FROM search_result ORDER BY ID DESC LIMIT 1", self.conn)
+        logger.debug("Retrieved the last search entry from the database.")
         return df
 
     
